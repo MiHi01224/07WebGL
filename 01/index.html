@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>three.jsの基礎</title>
+    <style>
+        body{
+            margin:0;
+            overflow:hidden;
+            background: url(./images/space.webp)no-repeat center/cover;
+        }
+    </style>
+</head>
+<body>
+    <script type="importmap">
+        {
+            "imports":{
+                "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js",
+                "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        //アドオンの読み込み
+        import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+        // シーンの作成
+        const scene = new THREE.Scene();
+
+        // カメラの作成
+        const camera = new THREE.PerspectiveCamera(
+            50,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+
+        //カメラの位置を調整
+        camera.position.z = 500;
+
+        //レンダラーの作成
+        const renderer = new THREE.WebGLRenderer({alpha:true});
+        renderer.setSize(window.innerWidth,window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        //マウスで操作できるようにする
+        const controls = new OrbitControls(camera,renderer.domElement);
+
+        //球体ジオメトリの作成
+        const geometry = new THREE.SphereGeometry(100,64,32);
+        //テクスチャの読み込み
+        const texture = new THREE.TextureLoader().load("./images/earth.webp");
+
+        //マテリアルの作成
+        const material = new THREE.MeshStandardMaterial({map:texture});
+
+        //メッシュで組み合わせる
+        const sphere = new THREE.Mesh(geometry,material);
+        scene.add(sphere);
+
+        //ライトの追加
+        const light = new THREE.DirectionalLight(0xffffff);
+        light.position.set(1,1,1);
+        scene.add(light);
+
+        //再レンダリング
+        const update = () => {
+            //球体を回転させる
+            sphere.rotation.x +=0.001;
+            sphere.rotation.y +=0.001;
+            sphere.rotation.z +=0.001;
+
+            renderer.render(scene, camera);
+            window.requestAnimationFrame(update);
+        }
+
+        update();
+        //関数式の設定
+        const onWindowResize = () => {
+            //レンダリングのサイズを再設定
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            //カメラのアスペクト比を調整
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        }
+
+        //ウィンドウにリサイズイベントを登録
+        window.addEventListener('resize', onWindowResize);
+
+        console.log(sphere);
+
+
+    </script>
+</body>
+</html>
