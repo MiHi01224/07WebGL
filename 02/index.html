@@ -17,7 +17,8 @@
             "imports": {
                 "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js",
                 "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/",
-                "stats": "https://cdn.skypack.dev/stats.js.fps"
+                "stats": "https://cdn.skypack.dev/stats.js.fps",
+                "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm"
             }
         }
     </script>
@@ -26,6 +27,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import Stats from 'stats';
+        import GUI from 'lil-gui';
 
         // シーン
         const scene = new THREE.Scene();
@@ -39,26 +41,54 @@
         stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
         document.body.appendChild(stats.dom);
 
+        //GUI
+        const gui = new GUI();
+
 
         //カメラ
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight);
         camera.position.z = 3;
         scene.add(camera);
 
-        //オブジェクト
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-        const box = new THREE.Mesh(geometry, material);
-        scene.add(box);
+        const group = new THREE.Group();
+        scene.add(group);
 
-        box.position.set(0.7, - 0.6, 1);
-        box.scale.set(2, 0.25, 0.5);
-        box.rotation.x =(Math.PI / 180) * 45;
+        //オブジェクトの追加
 
-        console.log(box.position.length());
-        console.log(box.position.distanceTo(camera.position));
-        console.log(box.position.distanceTo(new THREE.Vector3(0, 0, 0)));
-        console.log(box.position.normalize());
+        const box = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1, 1),
+                new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: false })
+            );
+            group.add(box);
+
+            const box2 = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1, 1),
+                new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: false })
+            );
+            group.add(box2);
+            box2.position.y = -1;
+
+            group.position.x = 1;
+
+            const guiPosition = gui.addFolder("Position");
+            guiPosition.add(box.position, 'x', -3, 3, 0.1).name("positionX");
+            guiPosition.add(box.position, 'y', -3, 3, 0.1).name("positionY");
+            guiPosition.add(box.position, 'z', -3, 3, 0.1).name("positionZ");
+
+            const guiMaterial = gui.addFolder("Material");
+            guiMaterial.add(box.material, 'wireframe');
+            guiMaterial.addColor(box.material, 'color');
+
+        //ここまでがオブジェクトの追加
+
+        // box.position.set(0.7, - 0.6, 1);
+        // box.scale.set(2, 0.25, 0.5);
+        // box.rotation.x =(Math.PI / 180) * 45;
+
+        // console.log(box.position.length());
+        // console.log(box.position.distanceTo(camera.position));
+        // console.log(box.position.distanceTo(new THREE.Vector3(0, 0, 0)));
+        // console.log(box.position.normalize());
 
         //レンダラー
         const renderer = new THREE.WebGLRenderer();
