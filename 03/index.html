@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>デジタル時計</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <script type="importmap">
+          {
+            "imports": {
+              "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.js",
+              "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/",
+              "stats": "https://cdn.skypack.dev/stats.js.fps",
+              "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm"
+            }
+          }
+        </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+        import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+        import Stats from 'stats';
+        import GUI from 'lil-gui';
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xddd9e7);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight);
+        camera.position.z = 5;
+        scene.add(camera);
+
+        // const axesHelper = new THREE.AxesHelper(2);
+        // scene.add(axesHelper);
+
+        const stats = new Stats();
+        stats.showPanel(0);
+        document.body.appendChild(stats.dom);
+
+        const gui = new GUI();
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0);
+        scene.add(ambientLight);
+
+        const guiAmbient = gui.addFolder('周囲光');
+        guiAmbient.addColor(ambientLight, 'color').name('色');
+        guiAmbient.add(ambientLight, 'intensity', 0, 5).name('強度');
+
+        const directionalLight = new THREE.DirectionalLight(0xffff00, 3);
+        directionalLight.position.set(1, 1, 2);
+        scene.add(directionalLight);
+
+        const guiDirectional = gui.addFolder('平行光');
+        guiDirectional.addColor(directionalLight, 'color').name('色');
+        guiDirectional.add(directionalLight, 'intensity', 0, 5).name('強度');
+
+        const hemisphereLight = new THREE.HemisphereLight(0xff00a2, 0x99a0ff, 3);
+        scene.add(hemisphereLight);
+
+        const guiHemisphere = gui.addFolder('半球光');
+        guiHemisphere.addColor(hemisphereLight, 'color').name('空の色');
+        guiHemisphere.addColor(hemisphereLight, 'groundColor').name('地面の色');
+        guiHemisphere.add(hemisphereLight, 'intensity', 0, 5).name('強度');
+
+
+        // const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight);
+        // scene.add(directionalLightHelper);
+        // const hemisphereLightHelper = new THREE.HemisphereLightHelper(hemisphereLight);
+        // scene.add(hemisphereLightHelper);
+
+        const group = new THREE.Group();
+        scene.add(group);
+
+        const leftFillNum = (num) => {
+            return num.toString().padStart(2, '0');
+        };
+
+        let text = null;
+        let material = null;
+        let textGeometry = null;
+
+        const getTime = (font) => {
+            group.remove(text);
+            if (material) material.dispose();
+            if (textGeometry) textGeometry.dispose();
+
+            const now = new Date();
+            const hour = leftFillNum(now.getHours());
+            const minute = leftFillNum(now.getMinutes());
+            const second = leftFillNum(now.getSeconds());
+            const milliSecond = now.getMilliseconds();
+            const currentTime = `${hour}:${minute}:${second}`;
+
+            material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            textGeometry = new TextGeometry(currentTime, {
+                font: font,
+                size: 0.5,
+                depth: 0.2,
+                bevelEnabled: true,
+                bevelThickness: 0.03,
+                bevelSize: 0.01,
+                bevelOffset: 0,
+                bevelSegments:5,
+            });
+
+            textGeometry.center();
+
+            text = new THREE.Mesh(textGeometry, material);
+            group.add(text);
+
+            setTimeout(getTime, 1000 - milliSecond, font);
+        }
+
+        const fontLoader = new FontLoader();
+        fontLoader.load('./font/Plaster_Regular.json', (font) => {
+            getTime(font);
+        });
+
+        //オブジェクト追加
+            for (let i = 0; i < 100; i++) {
+                const box = new THREE.Mesh(
+                    new THREE.ConeGeometry(),
+                    new THREE.MeshStandardMaterial({ color: 0xc4b3f4 })
+                );
+
+                box.position.x = (Math.random() - 0.5) * 10;
+                box.position.y = (Math.random() - 0.5) * 10;
+                box.position.z = (Math.random() - 0.5) * 10;
+                box.rotation.x = Math.random() * Math.PI;
+                box.rotation.y = Math.random() * Math.PI;
+                const scale = (Math.random()+0.1)*1.2;
+                box.scale.set(scale/2, scale, scale/2);
+                group.add(box);
+            }
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        renderer.render(scene, camera);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        const update = () => {
+            stats.begin();
+
+            group.rotation.x += 0.0002;
+            group.rotation.y += 0.0002;
+            group.rotation.z += 0.0002;
+
+            renderer.render(scene, camera);
+            controls.update();
+            stats.end();
+            window.requestAnimationFrame(update);
+        };
+
+        update();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
