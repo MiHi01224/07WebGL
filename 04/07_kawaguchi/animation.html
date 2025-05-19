@@ -66,9 +66,9 @@
 
             // 方向をランダムに決定
             const angle = Math.random() * Math.PI * 2;
-            const radius = Math.random(); // 速度の強さ
+            const radius = Math.random()*10; // 速度の強さ
             directions[i3 + 0] = Math.cos(angle) * radius;
-            directions[i3 + 1] = (Math.random() - 0.5) * 2;
+            directions[i3 + 1] = (Math.random() - 0.5) * 20;
             directions[i3 + 2] = Math.sin(angle) * radius;
 
         }
